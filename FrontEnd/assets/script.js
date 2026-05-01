@@ -19,6 +19,21 @@ async function fetchWorks() {
   }
 }
 
+async function fetchCategories() {
+  try {
+    const response = await fetch(`${API_URL}/categories`);
+
+    if (!response.ok) {
+      throw new Error(`Erreur catégories: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Erreur fetchCategories: ", error);
+    throw error;
+  }
+}
+
 function createWorkElement(work) {
   const figure = document.createElement("figure");
   const img = document.createElement("img");
@@ -34,6 +49,18 @@ function createWorkElement(work) {
   return figure;
 }
 
+function createFilterButton(label, onClick, isActive = false) {
+  const button = document.createElement("button");
+
+  button.textContent = label;
+  button.classList.add("filter-btn");
+
+  if (isActive) button.classList.add("active");
+  button.addEventListener("click", onClick);
+
+  return button;
+}
+
 function displayWorks(works) {
   const gallery = document.querySelector(".gallery");
   gallery.innerHTML = "";
@@ -45,8 +72,46 @@ function displayWorks(works) {
   });
 }
 
+function displayFilters(categories, allWorks) {
+  const filtersContainer = document.querySelector(".filters");
+  filtersContainer.innerHTML = "";
+
+  const allButton = createFilterButton(
+    "Tous",
+    () => {
+      setActiveButton(allButton);
+      displayWorks(allWorks);
+    },
+    true
+  );
+  filtersContainer.appendChild(allButton);
+
+  categories.forEach((category) => {
+    const button = createFilterButton(category.name, () => {
+      setActiveButton(button);
+      const filtered = allWorks.filter(
+        (work) => work.category.id === category.id
+      );
+      displayWorks(filtered);
+    });
+
+    filtersContainer.appendChild(button);
+  });
+}
+
+function setActiveButton(activeBtn) {
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  activeBtn.classList.add("active");
+}
+
 async function initGallery() {
-  const works = await fetchWorks();
+  const [works, categories] = await Promise.all([
+    fetchWorks(),
+    fetchCategories(),
+  ]);
+  displayFilters(categories, works);
   displayWorks(works);
 }
 
