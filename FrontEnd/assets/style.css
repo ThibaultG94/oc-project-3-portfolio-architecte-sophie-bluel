@@ -429,3 +429,10 @@ input[type="submit"] {
 	text-decoration: underline;
 	text-align: center;
 }
+
+#login .error-message {
+	display: none;
+	color: red;
+	text-align: center;
+	margin-bottom: 1em;
+}
