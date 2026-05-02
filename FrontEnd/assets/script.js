@@ -106,6 +106,34 @@ function setActiveButton(activeBtn) {
   activeBtn.classList.add("active");
 }
 
+function initEditMode() {
+  const token = localStorage.getItem("token");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  if (!token) return;
+
+  // Bandeau mode édition
+  document.getElementById("edit-banner").style.display = "flex";
+
+  // Login → Logout
+  document.getElementById("login-btn").style.display = "none";
+  logoutBtn.style.display = "block";
+
+  // Gestion du logout
+  logoutBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    window.location.reload();
+  });
+
+  // Masquer les filtres
+  document.querySelector(".filters").style.display = "none";
+
+  // Afficher le bouton modifier
+  document.getElementById("edit-projects-btn").style.display = "flex";
+}
+
 async function initGallery() {
   const [works, categories] = await Promise.all([
     fetchWorks(),
@@ -115,4 +143,5 @@ async function initGallery() {
   displayWorks(works);
 }
 
+initEditMode();
 initGallery();
