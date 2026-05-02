@@ -1,7 +1,11 @@
+/* ===================== RESET ===================== */
+
+
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */
+
 
 html,
 body,
@@ -134,23 +138,33 @@ table {
 	border-spacing: 0;
 }
 
+
 /** end reset css**/
+
+/* ================= BASE / GLOBAL ================= */
+
 body {
-	max-width: 1140px;
 	margin: auto;
-	font-family: 'Work Sans';
+	font-family: 'Work Sans', sans-serif;
 	font-size: 14px;
-}
-
-header {
+	background-color: #fffef8;
+	min-height: 100vh;
 	display: flex;
-	justify-content: space-between;
-	margin: 50px 0
+	flex-direction: column;
 }
 
-section {
-	margin: 50px 0
+header,
+main {
+	max-width: 1140px;
+	width: 100%;
+	margin: 0 auto;
 }
+
+main {
+	flex: 1;
+}
+
+/* --- Typography --- */
 
 h1 {
 	display: flex;
@@ -175,6 +189,14 @@ h2 {
 	color: #1D6154
 }
 
+/* --- Header & Nav --- */
+
+header {
+	display: flex;
+	justify-content: space-between;
+	padding: 50px 0
+}
+
 nav ul {
 	display: flex;
 	align-items: center;
@@ -190,6 +212,41 @@ nav li {
 li:hover {
 	color: #B1663C;
 }
+
+nav a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.nav-active {
+	font-weight: 600;
+}
+
+/* --- Footer --- */
+
+footer {
+	background-color: white;
+	width: 100%;
+}
+
+footer nav ul {
+	max-width: 1140px;
+	margin: 0 auto;
+	display: flex;
+	justify-content: flex-end;
+	padding: 2em;
+}
+
+/* --- Sections --- */
+
+section {
+	margin: 50px 0
+}
+
+/* ================== INDEX PAGE ================== */
+
+/* Introduction */
+
 
 #introduction {
 	display: flex;
@@ -218,6 +275,8 @@ li:hover {
 	margin-bottom: 0.5em;
 }
 
+/* Portfolio & Gallery */
+
 #portfolio h2 {
 	text-align: center;
 	margin-bottom: 1em;
@@ -235,6 +294,36 @@ li:hover {
 	width: 100%;
 
 }
+
+/** Filters **/
+
+.filters {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+	margin-bottom: 2em;
+}
+
+.filter-btn {
+	height: 37px;
+	padding: 0 20px;
+	border: 1px solid #1D6154;
+	border-radius: 60px;
+	font-family: 'Syne';
+	font-weight: 700;
+	font-size: 16px;
+	cursor: pointer;
+	background-color: transparent;
+	color: #1D6154;
+}
+
+.filter-btn.active {
+	background-color: #1D6154;
+	color: white;
+}
+
+/* Contact */
+
 
 #contact {
 	width: 50%;
@@ -284,34 +373,59 @@ input[type="submit"] {
 	border-radius: 60px;
 }
 
-footer nav ul {
-	display: flex;
-	justify-content: flex-end;
-	margin: 2em
+/* ================== LOGIN PAGE ================== */
+#login {
+	width: 379px;
+	margin: 0 auto;
+	padding: 60px 0 80px;
 }
 
-/** Filters **/
-.filters {
-	display: flex;
-	justify-content: center;
-	gap: 10px;
-	margin-bottom: 2em;
+#login h2 {
+	text-align: center;
+	margin-bottom: 1.8em;
 }
 
-.filter-btn {
-	height: 37px;
-	padding: 0 20px;
-	border: 1px solid #1D6154;
-	border-radius: 60px;
-	font-family: 'Syne';
-	font-weight: 700;
-	font-size: 16px;
+#login form {
+	display: flex;
+	flex-direction: column;
+}
+
+#login label {
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 500;
+	font-size: 14px;
+	color: #3d3d3d;
+	margin-bottom: 0.6em;
+}
+
+#login input[type="email"],
+#login input[type="password"] {
+	height: 51px;
+	font-size: 1em;
+	border: none;
+	box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.09);
+	background-color: white;
+	padding: 0 12px;
+	margin-bottom: 1.5em;
+}
+
+#login input[type="submit"] {
+	font-size: 14px;
+	height: 36px;
+	width: 179px;
+	margin: 0.8em auto 1.2em;
 	cursor: pointer;
-	background-color: transparent;
-	color: #1D6154;
 }
 
-.filter-btn.active {
-	background-color: #1D6154;
-	color: white;
+#login input[type="submit"]:hover {
+	background-color: #164d42;
+}
+
+.forgot-password {
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 500;
+	font-size: 14px;
+	color: #3d3d3d;
+	text-decoration: underline;
+	text-align: center;
 }
