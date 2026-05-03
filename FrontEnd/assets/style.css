@@ -473,6 +473,221 @@ input[type="submit"] {
 	cursor: pointer;
 }
 
-#nav-logout {
+#logout-btn {
 	display: none;
+}
+
+/* ================== MODAL ================== */
+
+#modal-overlay.hidden,
+#modal-gallery.hidden,
+#modal-form.hidden,
+#upload-preview.hidden {
+	display: none;
+}
+
+#modal-overlay {
+	position: fixed;
+	inset: 0;
+	background-color: rgba(0, 0, 0, 0.3);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 100;
+}
+
+.modal {
+	background-color: #fff;
+	border-radius: 10px;
+	width: 630px;
+	max-width: 95vw;
+	padding: 40px 0 50px;
+	position: relative;
+}
+
+/* ── Zones ── */
+
+.modal-zone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 30px;
+	padding: 0 105px;
+	position: relative;
+}
+
+.modal-zone h3 {
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 400;
+	font-size: 26px;
+	color: #000;
+	text-align: center;
+	margin: 0;
+}
+
+/* ── Close and Return button ── */
+
+.modal-return,
+#modal-back {
+	position: absolute;
+	top: 20px;
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #1d1d1d;
+	padding: 0;
+	font-size: 18px;
+	line-height: 1;
+}
+
+.modal-return {
+	right: 20px;
+}
+
+#modal-back {
+	left: 20px;
+	display: none;
+}
+
+/* ── Gallery grid ── */
+
+#modal-works-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 9px;
+	width: 420px;
+	max-height: 360px;
+	overflow-y: auto;
+}
+
+.modal-work-item {
+	position: relative;
+}
+
+.modal-work-item img {
+	width: 100%;
+	aspect-ratio: 3 / 4;
+	object-fit: cover;
+	display: block;
+}
+
+.modal-work-item .delete-btn {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	background-color: #000;
+	color: #fff;
+	border: none;
+	border-radius: 2px;
+	width: 17px;
+	height: 17px;
+	cursor: pointer;
+	font-size: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+/* ── Separator ── */
+
+.modal-separator {
+	width: 420px;
+	border: none;
+	border-top: 1px solid #ccc;
+	margin: 0;
+}
+
+/* ── Main button ── */
+
+.btn-modal {
+	background-color: #1d6154;
+	color: #fff;
+	border: none;
+	border-radius: 60px;
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 400;
+	font-size: 14px;
+	height: 36px;
+	width: 237px;
+	cursor: pointer;
+}
+
+.btn-modal--disabled,
+.btn-modal:disabled {
+	background-color: #a7a7a7;
+	cursor: not-allowed;
+}
+
+/* ── Upload zone ── */
+
+.upload-area {
+	width: 420px;
+	display: flex;
+	justify-content: center;
+}
+
+#upload-label {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	width: 169px;
+	height: 169px;
+	background-color: #e8edec;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	color: #444;
+	text-align: center;
+}
+
+#upload-label i {
+	font-size: 50px;
+	color: #1d6154;
+}
+
+.upload-hint {
+	font-size: 11px;
+	color: #888;
+}
+
+#upload-preview {
+	width: 169px;
+	height: 169px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+/* ── Form fields ── */
+
+.form-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 420px;
+}
+
+.form-fields label {
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 400;
+	font-size: 14px;
+	color: #333;
+}
+
+.form-fields input,
+.form-fields select {
+	height: 50px;
+	border: none;
+	box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.09);
+	padding: 0 12px;
+	font-size: 14px;
+	font-family: 'Work Sans', sans-serif;
+	background-color: #fff;
 }

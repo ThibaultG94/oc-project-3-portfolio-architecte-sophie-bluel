@@ -1,5 +1,7 @@
 const API_URL = "http://localhost:5678/api";
 
+// ─── API ──────────────────────────────────────────────
+
 async function fetchWorks() {
   try {
     const response = await fetch(`${API_URL}/works`);
@@ -33,6 +35,8 @@ async function fetchCategories() {
     throw error;
   }
 }
+
+// ─── Main Gallery ───────────────────────────────
 
 function createWorkElement(work) {
   const figure = document.createElement("figure");
@@ -106,6 +110,17 @@ function setActiveButton(activeBtn) {
   activeBtn.classList.add("active");
 }
 
+async function initGallery() {
+  const [works, categories] = await Promise.all([
+    fetchWorks(),
+    fetchCategories(),
+  ]);
+  displayFilters(categories, works);
+  displayWorks(works);
+}
+
+// ─── Edit mode ─────────────────────────────────────
+
 function initEditMode() {
   const token = localStorage.getItem("token");
   const logoutBtn = document.getElementById("logout-btn");
@@ -134,14 +149,53 @@ function initEditMode() {
   document.getElementById("edit-projects-btn").style.display = "flex";
 }
 
-async function initGallery() {
-  const [works, categories] = await Promise.all([
-    fetchWorks(),
-    fetchCategories(),
-  ]);
-  displayFilters(categories, works);
-  displayWorks(works);
+// ─── Modal ────────────────────────────────────────────
+
+function openModal() {
+  document.getElementById("modal-overlay").classList.remove("hidden");
 }
 
+function closeModal() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+}
+
+function showGalleryZone() {
+  document.getElementById("modal-gallery").classList.remove("hidden");
+  document.getElementById("modal-form").classList.add("hidden");
+  document.getElementById("modal-back").style.display = "none";
+}
+
+function showFormZone() {
+  document.getElementById("modal-gallery").classList.add("hidden");
+  document.getElementById("modal-form").classList.remove("hidden");
+  document.getElementById("modal-back").style.display = "block";
+}
+
+function initModal() {
+  document
+    .getElementById("edit-projects-btn")
+    .addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal();
+    });
+
+  document.getElementById("modal-overlay").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-overlay")) closeModal();
+  });
+
+  document.querySelector(".modal-return").addEventListener("click", closeModal);
+
+  document
+    .getElementById("modal-app-photo-btn")
+    .addEventListener("click", showFormZone);
+
+  document
+    .getElementById("modal-back")
+    .addEventListener("click", showGalleryZone);
+}
+
+// ─── Init ─────────────────────────────────────────────
+
 initEditMode();
+initModal();
 initGallery();
