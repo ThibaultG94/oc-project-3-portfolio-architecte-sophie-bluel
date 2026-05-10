@@ -1,4 +1,19 @@
 const API_URL = "http://localhost:5678/api";
+// État partagé
+let allWorks = [];
+let allCategories = [];
+
+function logoutAndReload() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  window.location.reload();
+}
+
+function logoutAndRedirectToLogin() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  window.location.href = "./pages/login.html";
+}
 
 // ─── API ──────────────────────────────────────────────
 
@@ -40,6 +55,36 @@ async function fetchCategories() {
   } catch (error) {
     // Affiche l'erreur dans la console puis la renvoie à la fonction appelante.
     console.error("Erreur fetchCategories: ", error);
+    throw error;
+  }
+}
+
+async function deleteWork(id) {
+  // Récupère le token JWT pour authentifier la requête
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Utilisateur non authentifié : token manquant");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/works/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        logoutAndRedirectToLogin();
+        throw new Error("Session expirée");
+      }
+
+      throw new Error(`Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Erreur deleteWork ", error);
     throw error;
   }
 }
@@ -164,10 +209,11 @@ async function initGallery() {
     fetchCategories(),
   ]);
 
-  // Crée les filtres à partir des catégories récupérées.
-  displayFilters(categories, works);
+  // Stockage des données pour pouvoir les réutiliser après suppression.
+  allWorks = works;
+  allCategories = categories;
 
-  // Affiche tous les projets au chargement.
+  displayFilters(categories, works);
   displayWorks(works);
 }
 
@@ -194,11 +240,8 @@ function initEditMode() {
     e.preventDefault();
 
     // Supprime les informations de connexion.
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-
-    // Recharge la page pour revenir à l'affichage visiteur.
-    window.location.reload();
+    // Déconnecte puis recharge la page pour revenir à l'affichage visiteur.
+    logoutAndReload();
   });
 
   // Masquer les filtres
@@ -211,8 +254,9 @@ function initEditMode() {
 // ─── Modal ────────────────────────────────────────────
 
 function openModal() {
-  // Ouvre la modale.
+  // Ouvre la modale et peuple la galerie avec l'état actuel
   document.getElementById("modal-overlay").classList.remove("hidden");
+  displayModalWorks(allWorks);
 }
 
 function closeModal() {
@@ -271,8 +315,69 @@ function initModal() {
     .addEventListener("click", showGalleryZone);
 }
 
+// ─── Modal Gallery (mode édition) ─────────────────────
+
+function createModalWorkElement(work) {
+  // Crée une vignette de la modale avec son bouton poubelle
+
+  const item = document.createElement("div");
+  item.classList.add("modal-work-item");
+
+  const img = document.createElement("img");
+  img.src = work.imageUrl;
+  img.alt = work.title;
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.classList.add("delete-btn");
+  deleteBtn.setAttribute("aria-label", `Supprimer ${work.title}`);
+  deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+
+  // Branche le clic du bouton sur le handler de suppression
+  deleteBtn.addEventListener("click", () => handleDeleteWork(work.id));
+
+  item.appendChild(img);
+  item.appendChild(deleteBtn);
+
+  return item;
+}
+
+function displayModalWorks(works) {
+  // Remplit la grille de la modale avec les vignettes
+  const grid = document.getElementById("modal-works-grid");
+
+  if (!grid) return;
+
+  // Vide la grille avant de la reconstruire
+  grid.innerHTML = "";
+
+  works.forEach((work) => {
+    const item = createModalWorkElement(work);
+    grid.appendChild(item);
+  });
+}
+
+async function handleDeleteWork(workId) {
+  try {
+    await deleteWork(workId);
+
+    // Met à jour l'état partagé en retirant le projet supprimé
+    allWorks = allWorks.filter((work) => work.id !== workId);
+
+    // Re-render les deux galeries pour rester synchro
+    displayWorks(allWorks);
+    displayModalWorks(allWorks);
+  } catch (error) {
+    // Si l'API a renvoyé une erreur, on prévient l'utilisateur sans toucher au DOM
+    alert("Impossible de supprimer ce projet");
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────
 
-initEditMode();
-initModal();
-initGallery();
+async function init() {
+  initEditMode();
+  await initGallery();
+  initModal();
+}
+
+init();
