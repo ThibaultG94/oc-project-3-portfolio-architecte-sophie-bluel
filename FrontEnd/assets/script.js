@@ -1,5 +1,4 @@
 const API_URL = "http://localhost:5678/api";
-// État partagé
 let allWorks = [];
 let allCategories = [];
 
@@ -19,22 +18,20 @@ function logoutAndRedirectToLogin() {
 
 async function fetchWorks() {
   try {
-    // Récupère tous les projets.
     const response = await fetch(`${API_URL}/works`);
 
-    // Stoppe la fonction si l'API renvoie une erreur.
     if (!response.ok) {
       throw new Error(
         `Impossible de récupérer les données. Status: ${response.status}`
       );
     }
 
-    // Convertit la réponse JSON en tableau JavaScript exploitable.
+    // Convertit la réponse JSON en tableau JavaScript exploitable
     const works = await response.json();
 
     return works;
   } catch (error) {
-    // Affiche l'erreur dans la console puis la renvoie à la fonction appelante.
+    // Affiche l'erreur dans la console puis la renvoie à la fonction appelante
     console.error("Erreur fetchWorks: ", error);
     throw error;
   }
@@ -42,18 +39,15 @@ async function fetchWorks() {
 
 async function fetchCategories() {
   try {
-    // Récupère toutes les catégories.
     const response = await fetch(`${API_URL}/categories`);
 
-    // Stoppe la fonction si la récupération échoue.
     if (!response.ok) {
       throw new Error(`Erreur catégories: ${response.status}`);
     }
 
-    // Retourne directement les catégories converties depuis le JSON.
+    // Retourne directement les catégories converties depuis le JSON
     return await response.json();
   } catch (error) {
-    // Affiche l'erreur dans la console puis la renvoie à la fonction appelante.
     console.error("Erreur fetchCategories: ", error);
     throw error;
   }
@@ -89,29 +83,59 @@ async function deleteWork(id) {
   }
 }
 
+async function addWork(formData) {
+  // Récupère le token JWT pour authentifier la requête
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Utilisateur non authentifié : token manquant");
+  }
+
+  const response = await fetch(`${API_URL}/works`, {
+    method: "POST",
+    headers: {
+      // Pas de Content-Type ici : le navigateur le génère automatiquement avec le boundary correct pour le multipart/form-data.
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      logoutAndRedirectToLogin();
+      throw new Error("Session expirée");
+    }
+
+    throw new Error(`Erreur API: ${response.status}`);
+  }
+
+  // Retourne le nouveau projet créé par l'API
+  return await response.json();
+}
+
 // ─── Main Gallery ───────────────────────────────
 
 function createWorkElement(work) {
-  // Crée la carte HTML d'un projet (work).
+  // Crée la carte HTML d'un projet (work)
   const figure = document.createElement("figure");
   const img = document.createElement("img");
   const caption = document.createElement("figcaption");
 
-  // Remplit l'image et sa légende avec les données du projet.
+  // Remplit l'image et sa légende avec les données du projet
   img.src = work.imageUrl;
   img.alt = work.title;
   caption.textContent = work.title;
 
-  // Ajoute l'image puis le titre dans la balise figure.
+  // Ajoute l'image puis le titre dans la balise figure
   figure.appendChild(img);
   figure.appendChild(caption);
 
-  // Retourne l'élément prêt à être inséré dans la galerie.
+  // Retourne l'élément prêt à être inséré dans la galerie
   return figure;
 }
 
 function createFilterButton(label, onClick, isActive = false) {
-  // Crée et configure un bouton de filtre réutilisable.
+  // Crée et configure un bouton de filtre réutilisable
   const button = document.createElement("button");
 
   button.textContent = label;
@@ -124,11 +148,9 @@ function createFilterButton(label, onClick, isActive = false) {
 }
 
 function displayWorks(works) {
-  // Affiche une liste de projets dans la galerie.
-
-  // Vérifie que les projets reçus sont bien sous forme de tableau.
+  // Vérifie que les projets reçus sont bien sous forme de tableau
   if (!Array.isArray(works)) {
-    // Si les données ne sont pas valides, on arrête la fonction.
+    // Si les données ne sont pas valides, on arrête la fonction
     return;
   }
 
@@ -138,10 +160,10 @@ function displayWorks(works) {
     return;
   }
 
-  // Vide l'affichage précédent avant de reconstruire la galerie.
+  // Vide l'affichage précédent avant de reconstruire la galerie
   gallery.innerHTML = "";
 
-  // Crée puis ajoute une carte HTML pour chaque projet.
+  // Crée puis ajoute une carte HTML pour chaque projet
   works.forEach((work) => {
     const workElement = createWorkElement(work);
     gallery.appendChild(workElement);
@@ -149,67 +171,65 @@ function displayWorks(works) {
 }
 
 function displayFilters(categories, allWorks) {
-  // Affiche les boutons de filtre.
+  // Affiche les boutons de filtre
 
   const filtersContainer = document.querySelector(".filters");
-
-  // Nettoie les anciens filtres avant de les recréer.
   filtersContainer.innerHTML = "";
 
-  // Crée le filtre "Tous", actif par défaut.
+  // Crée le filtre "Tous", actif par défaut
   const allButton = createFilterButton(
     "Tous",
     () => {
-      // Active le bouton puis affiche tous les projets.
+      // Active le bouton puis affiche tous les projets
       setActiveButton(allButton);
       displayWorks(allWorks);
     },
     true
   );
 
-  // Ajoute le bouton "Tous" dans le conteneur.
+  // Ajoute le bouton "Tous" dans le conteneur
   filtersContainer.appendChild(allButton);
 
   categories.forEach((category) => {
-    // Crée un bouton pour la catégorie courante.
+    // Crée un bouton pour la catégorie courante
     const button = createFilterButton(category.name, () => {
-      // Active le bouton sélectionné.
+      // Active le bouton sélectionné
       setActiveButton(button);
 
-      // Garde uniquement les projets de cette catégorie.
+      // Garde uniquement les projets de cette catégorie
       const filtered = allWorks.filter(
         (work) => work.category.id === category.id
       );
 
-      // Met à jour la galerie avec les projets filtrés.
+      // Met à jour la galerie avec les projets filtrés
       displayWorks(filtered);
     });
 
-    // Ajoute le bouton de catégorie dans la liste des filtres.
+    // Ajoute le bouton de catégorie dans la liste des filtres
     filtersContainer.appendChild(button);
   });
 }
 
 function setActiveButton(activeBtn) {
-  // Met à jour le bouton de filtre actif.
+  // Met à jour le bouton de filtre actif
 
   document.querySelectorAll(".filter-btn").forEach((btn) => {
-    // Retire l'état actif de chaque bouton.
+    // Retire l'état actif de chaque bouton
     btn.classList.remove("active");
   });
 
-  // Active uniquement le bouton sélectionné.
+  // Active uniquement le bouton sélectionné
   activeBtn.classList.add("active");
 }
 
 async function initGallery() {
-  // Initialise la galerie principale.
+  // Initialise la galerie principale
   const [works, categories] = await Promise.all([
     fetchWorks(),
     fetchCategories(),
   ]);
 
-  // Stockage des données pour pouvoir les réutiliser après suppression.
+  // Stockage des données pour pouvoir les réutiliser après suppression
   allWorks = works;
   allCategories = categories;
 
@@ -220,11 +240,11 @@ async function initGallery() {
 // ─── Edit mode ─────────────────────────────────────
 
 function initEditMode() {
-  // Initialise l'affichage du mode édition.
+  // Initialise l'affichage du mode édition
   const token = localStorage.getItem("token");
   const logoutBtn = document.getElementById("logout-btn");
 
-  // Si aucun token n'est présent, l'utilisateur reste en mode visiteur.
+  // Si aucun token n'est présent, l'utilisateur reste en mode visiteur
   if (!token) return;
 
   // Bandeau mode édition
@@ -236,18 +256,14 @@ function initEditMode() {
 
   // Gestion du logout
   logoutBtn.addEventListener("click", (e) => {
-    // Empêche le comportement par défaut du lien.
     e.preventDefault();
 
-    // Supprime les informations de connexion.
-    // Déconnecte puis recharge la page pour revenir à l'affichage visiteur.
+    // Déconnecte puis recharge la page pour revenir à l'affichage visiteur
     logoutAndReload();
   });
 
-  // Masquer les filtres
+  // Masquer les filtres et afficher le bouton "Modifier"
   document.querySelector(".filters").style.display = "none";
-
-  // Afficher le bouton modifier
   document.getElementById("edit-projects-btn").style.display = "flex";
 }
 
@@ -260,56 +276,62 @@ function openModal() {
 }
 
 function closeModal() {
-  // Ferme la modale.
+  // Ferme la modale et réinitialise le formulaire
   document.getElementById("modal-overlay").classList.add("hidden");
+  resetForm();
 }
 
 function showGalleryZone() {
-  // Affiche la vue galerie de la modale.
+  // Affiche la vue galerie de la modale
   document.getElementById("modal-gallery").classList.remove("hidden");
 
-  // Cache le formulaire d'ajout.
+  // Cache le formulaire d'ajout
   document.getElementById("modal-form").classList.add("hidden");
 
-  // Cache le bouton retour sur la vue principale.
+  // Cache le bouton retour sur la vue principale
   document.getElementById("modal-back").style.display = "none";
+
+  // Réinitialise le formulaire pour un usage futur
+  resetForm();
 }
 
 function showFormZone() {
-  // Affiche la vue formulaire de la modale.
+  // Affiche la vue formulaire de la modale
   document.getElementById("modal-gallery").classList.add("hidden");
 
-  // Rend le formulaire visible.
+  // Rend le formulaire visible
   document.getElementById("modal-form").classList.remove("hidden");
 
-  // Affiche le bouton retour vers la galerie.
+  // Affiche le bouton retour vers la galerie
   document.getElementById("modal-back").style.display = "block";
+
+  // Peuple le select avec les catégories disponibles
+  populateCategories();
 }
 
 function initModal() {
-  // Initialise les événements de la modale.
+  // Initialise les événements de la modale
   document
     .getElementById("edit-projects-btn")
     .addEventListener("click", (e) => {
-      // Empêche le comportement par défaut puis ouvre la modale.
       e.preventDefault();
       openModal();
     });
 
   document.getElementById("modal-overlay").addEventListener("click", (e) => {
-    // Ferme la modale uniquement si l'utilisateur clique sur l'arrière-plan.
+    // Ferme la modale si l'utilisateur clique sur l'arrière-plan
     if (e.target === document.getElementById("modal-overlay")) closeModal();
   });
 
-  // Ferme la modale via le bouton de fermeture.
+  // Ferme la modale via le bouton de fermeture
   document.querySelector(".modal-return").addEventListener("click", closeModal);
 
-  // Passe de la galerie au formulaire d'ajout.
+  // Passe de la galerie au formulaire d'ajout
   document
     .getElementById("modal-app-photo-btn")
     .addEventListener("click", showFormZone);
 
-  // Revient du formulaire vers la galerie.
+  // Revient du formulaire vers la galerie
   document
     .getElementById("modal-back")
     .addEventListener("click", showGalleryZone);
@@ -318,7 +340,7 @@ function initModal() {
 // ─── Modal Gallery (mode édition) ─────────────────────
 
 function createModalWorkElement(work) {
-  // Crée une vignette de la modale avec son bouton poubelle
+  // Créer une vignette avec son bouton poubelle
 
   const item = document.createElement("div");
   item.classList.add("modal-work-item");
@@ -372,12 +394,126 @@ async function handleDeleteWork(workId) {
   }
 }
 
+// ─── Modal Form ───────────────────────────────────────
+function populateCategories() {
+  const select = document.getElementById("work-category");
+
+  // Repart d'un select propre avec une option vide en premier
+  select.innerHTML = '<option value=""></option>';
+
+  allCategories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.name;
+    select.appendChild(option);
+  });
+}
+
+function resetForm() {
+  // Réinitialise tous les champs du formulaire d'ajout
+  document.getElementById("work-image").value = "";
+  document.getElementById("work-title").value = "";
+  document.getElementById("work-category").value = "";
+
+  // Remet la zone d'upload visible et cache l'aperçu
+  document.getElementById("upload-label").style.display = "flex";
+  document.getElementById("upload-preview").classList.add("hidden");
+
+  // Désactive le bouton "Valider"
+  const submitBtn = document.getElementById("modal-submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.classList.add("btn-modal--disabled");
+}
+
+function checkFormValidity() {
+  // Active le bouton "Valider" uniquement si les trois champs sont remplis
+  const image = document.getElementById("work-image").files[0];
+  const title = document.getElementById("work-title").value.trim();
+  const category = document.getElementById("work-category").value;
+
+  const isValid = !!image && title.length > 0 && category !== "";
+
+  const submitBtn = document.getElementById("modal-submit-btn");
+  submitBtn.disabled = !isValid;
+  submitBtn.classList.toggle("btn-modal--disabled", !isValid);
+}
+
+async function handleAddWork() {
+  // Collecte les données du formulaire
+  const imageFile = document.getElementById("work-image").files[0];
+  const title = document.getElementById("work-title").value.trim();
+  const category = document.getElementById("work-category").value;
+
+  // Construit le FormData pour l'envoi multipart/form-data
+  const formData = new FormData();
+  formData.append("image", imageFile);
+  formData.append("title", title);
+  formData.append("category", category);
+
+  try {
+    const newWork = await addWork(formData);
+
+    // Ajoute le nouveau projet à l'état partagé
+    allWorks.push(newWork);
+
+    // Rafraîchit la galerie principale
+    displayWorks(allWorks);
+
+    // Retourne à la galerie de la modale (le reset est fait dans showGalleryZone)
+    showGalleryZone();
+    displayModalWorks(allWorks);
+  } catch (error) {
+    console.error("Erreur handleAddWork: ", error);
+    alert("Impossible d'ajouter ce projet.");
+  }
+}
+
+function initForm() {
+  // Initialise tous les évènements du formulaire d'ajout
+
+  const imageInput = document.getElementById("work-image");
+  const titleInput = document.getElementById("work-title");
+  const categorySelect = document.getElementById("work-category");
+
+  // Aperçu de l'image dès qu'un fichier est sélectionné
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        // Affiche l'aperçu et masque la zone de drop
+        const preview = document.getElementById("upload-preview");
+        preview.src = e.target.result;
+        preview.classList.remove("hidden");
+        document.getElementById("upload-label").style.display = "none";
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    // Vérifie la validité après chaque changement de fichier
+    checkFormValidity();
+  });
+
+  // Validation en temps réel sur le titre et la catégorie
+  titleInput.addEventListener("input", checkFormValidity);
+  categorySelect.addEventListener("change", checkFormValidity);
+
+  // Soumission du formulaire via le bouton "Valider"
+  document
+    .getElementById("modal-submit-btn")
+    .addEventListener("click", handleAddWork);
+}
+
 // ─── Init ─────────────────────────────────────────────
 
 async function init() {
   initEditMode();
   await initGallery();
   initModal();
+  initForm();
 }
 
 init();
