@@ -452,6 +452,12 @@ async function handleAddWork() {
 
   try {
     const newWork = await addWork(formData);
+    console.log(newWork);
+
+    // Reconstitue l'objet category pour rester cohérent avec le reste de allWorks
+    newWork.category = allCategories.find(
+      (cat) => cat.id === parseInt(category)
+    );
 
     // Ajoute le nouveau projet à l'état partagé
     allWorks.push(newWork);
@@ -478,8 +484,14 @@ function initForm() {
   // Aperçu de l'image dès qu'un fichier est sélectionné
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
+    const MAX_SIZE = 4 * 1024 * 1024; // 4 Mo
 
-    if (file) {
+    if (file && file.size > MAX_SIZE) {
+      alert("L'image ne doit pas dépasser 4 Mo.");
+      imageInput.value = "";
+    }
+
+    if (file && file.size <= MAX_SIZE) {
       const reader = new FileReader();
 
       reader.onload = (e) => {
@@ -493,7 +505,6 @@ function initForm() {
       reader.readAsDataURL(file);
     }
 
-    // Vérifie la validité après chaque changement de fichier
     checkFormValidity();
   });
 
@@ -511,7 +522,12 @@ function initForm() {
 
 async function init() {
   initEditMode();
-  await initGallery();
+  try {
+    await initGallery();
+  } catch (error) {
+    console.error("Erreur d'initialisation :", error);
+    alert("Impossible de charger les projets. Veuillez réessayer plus tard.");
+  }
   initModal();
   initForm();
 }
