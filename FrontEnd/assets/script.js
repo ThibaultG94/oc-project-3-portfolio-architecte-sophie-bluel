@@ -17,40 +17,31 @@ function logoutAndRedirectToLogin() {
 // ─── API ──────────────────────────────────────────────
 
 async function fetchWorks() {
-  try {
-    const response = await fetch(`${API_URL}/works`);
+  const response = await fetch(`${API_URL}/works`);
 
-    if (!response.ok) {
-      throw new Error(
-        `Impossible de récupérer les données. Status: ${response.status}`
-      );
-    }
-
-    // Convertit la réponse JSON en tableau JavaScript exploitable
-    const works = await response.json();
-
-    return works;
-  } catch (error) {
-    // Affiche l'erreur dans la console puis la renvoie à la fonction appelante
-    console.error("Erreur fetchWorks: ", error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(
+      `Erreur fetchWorks: ${response.status} ${response.statusText}`
+    );
   }
+
+  // Convertit la réponse JSON en tableau JavaScript exploitable
+  const works = await response.json();
+
+  return works;
 }
 
 async function fetchCategories() {
-  try {
-    const response = await fetch(`${API_URL}/categories`);
+  const response = await fetch(`${API_URL}/categories`);
 
-    if (!response.ok) {
-      throw new Error(`Erreur catégories: ${response.status}`);
-    }
-
-    // Retourne directement les catégories converties depuis le JSON
-    return await response.json();
-  } catch (error) {
-    console.error("Erreur fetchCategories: ", error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(
+      `Erreur fetchCategories: ${response.status} ${response.statusText}`
+    );
   }
+
+  // Retourne directement les catégories converties depuis le JSON
+  return await response.json();
 }
 
 async function deleteWork(id) {
@@ -58,6 +49,7 @@ async function deleteWork(id) {
   const token = localStorage.getItem("token");
 
   if (!token) {
+    logoutAndRedirectToLogin();
     throw new Error("Utilisateur non authentifié : token manquant");
   }
 
@@ -88,6 +80,7 @@ async function addWork(formData) {
   const token = localStorage.getItem("token");
 
   if (!token) {
+    logoutAndRedirectToLogin();
     throw new Error("Utilisateur non authentifié : token manquant");
   }
 
@@ -149,10 +142,8 @@ function createFilterButton(label, onClick, isActive = false) {
 
 function displayWorks(works) {
   // Vérifie que les projets reçus sont bien sous forme de tableau
-  if (!Array.isArray(works)) {
-    // Si les données ne sont pas valides, on arrête la fonction
-    return;
-  }
+
+  if (!Array.isArray(works)) return;
 
   const gallery = document.querySelector(".gallery");
 
@@ -170,8 +161,10 @@ function displayWorks(works) {
   });
 }
 
-function displayFilters(categories, allWorks) {
+function displayFilters(categories, works) {
   // Affiche les boutons de filtre
+
+  if (!Array.isArray(categories) || !Array.isArray(works)) return;
 
   const filtersContainer = document.querySelector(".filters");
   filtersContainer.innerHTML = "";
@@ -182,7 +175,7 @@ function displayFilters(categories, allWorks) {
     () => {
       // Active le bouton puis affiche tous les projets
       setActiveButton(allButton);
-      displayWorks(allWorks);
+      displayWorks(works);
     },
     true
   );
@@ -197,9 +190,7 @@ function displayFilters(categories, allWorks) {
       setActiveButton(button);
 
       // Garde uniquement les projets de cette catégorie
-      const filtered = allWorks.filter(
-        (work) => work.category.id === category.id
-      );
+      const filtered = works.filter((work) => work.category.id === category.id);
 
       // Met à jour la galerie avec les projets filtrés
       displayWorks(filtered);
@@ -224,10 +215,14 @@ function setActiveButton(activeBtn) {
 
 async function initGallery() {
   // Initialise la galerie principale
-  const [works, categories] = await Promise.all([
-    fetchWorks(),
-    fetchCategories(),
-  ]);
+  let works;
+  let categories;
+
+  try {
+    [works, categories] = await Promise.all([fetchWorks(), fetchCategories()]);
+  } catch (error) {
+    throw new Error("Échec du chargement de la galerie", { cause: error });
+  }
 
   // Stockage des données pour pouvoir les réutiliser après suppression
   allWorks = works;
@@ -242,6 +237,7 @@ async function initGallery() {
 function initEditMode() {
   // Initialise l'affichage du mode édition
   const token = localStorage.getItem("token");
+  const loginBtn = document.getElementById("login-btn");
   const logoutBtn = document.getElementById("logout-btn");
 
   // Si aucun token n'est présent, l'utilisateur reste en mode visiteur
@@ -251,7 +247,7 @@ function initEditMode() {
   document.getElementById("edit-banner").style.display = "flex";
 
   // Login → Logout
-  document.getElementById("login-btn").style.display = "none";
+  loginBtn.style.display = "none";
   logoutBtn.style.display = "block";
 
   // Gestion du logout
@@ -452,7 +448,6 @@ async function handleAddWork() {
 
   try {
     const newWork = await addWork(formData);
-    console.log(newWork);
 
     // Reconstitue l'objet category pour rester cohérent avec le reste de allWorks
     newWork.category = allCategories.find(
@@ -485,17 +480,26 @@ function initForm() {
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     const MAX_SIZE = 4 * 1024 * 1024; // 4 Mo
+    const ALLOWED_TYPES = ["image/jpeg", "image/png"];
+
+    if (file && !ALLOWED_TYPES.includes(file.type)) {
+      alert("Format invalide. Seuls les fichiers JPG et PNG sont acceptés.");
+      imageInput.value = "";
+      checkFormValidity();
+      return;
+    }
 
     if (file && file.size > MAX_SIZE) {
       alert("L'image ne doit pas dépasser 4 Mo.");
       imageInput.value = "";
+      checkFormValidity();
+      return;
     }
 
     if (file && file.size <= MAX_SIZE) {
       const reader = new FileReader();
 
       reader.onload = (e) => {
-        // Affiche l'aperçu et masque la zone de drop
         const preview = document.getElementById("upload-preview");
         preview.src = e.target.result;
         preview.classList.remove("hidden");
@@ -524,12 +528,16 @@ async function init() {
   initEditMode();
   try {
     await initGallery();
+
+    initModal();
+    initForm();
   } catch (error) {
     console.error("Erreur d'initialisation :", error);
+    if (error.cause) {
+      console.error("Cause d'origine :", error.cause);
+    }
     alert("Impossible de charger les projets. Veuillez réessayer plus tard.");
   }
-  initModal();
-  initForm();
 }
 
 init();
