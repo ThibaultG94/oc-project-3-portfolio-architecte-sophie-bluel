@@ -4,13 +4,11 @@ let allCategories = [];
 
 function logoutAndReload() {
   localStorage.removeItem("token");
-  localStorage.removeItem("userId");
   window.location.reload();
 }
 
 function logoutAndRedirectToLogin() {
   localStorage.removeItem("token");
-  localStorage.removeItem("userId");
   window.location.href = "./pages/login.html";
 }
 
@@ -405,6 +403,20 @@ function populateCategories() {
   });
 }
 
+function showFormError(message) {
+  const errorMessage = document.getElementById("form-error-message");
+
+  errorMessage.textContent = message;
+  errorMessage.style.display = "block";
+}
+
+function clearFormError() {
+  const errorMessage = document.getElementById("form-error-message");
+
+  errorMessage.textContent = "";
+  errorMessage.style.display = "none";
+}
+
 function resetForm() {
   // Réinitialise tous les champs du formulaire d'ajout
   document.getElementById("work-image").value = "";
@@ -419,6 +431,8 @@ function resetForm() {
   const submitBtn = document.getElementById("modal-submit-btn");
   submitBtn.disabled = true;
   submitBtn.classList.add("btn-modal--disabled");
+
+  clearFormError();
 }
 
 function checkFormValidity() {
@@ -483,20 +497,22 @@ function initForm() {
     const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
     if (file && !ALLOWED_TYPES.includes(file.type)) {
-      alert("Format invalide. Seuls les fichiers JPG et PNG sont acceptés.");
+      showFormError(
+        "Format invalide. Seuls les fichiers JPG et PNG sont acceptés."
+      );
       imageInput.value = "";
-      checkFormValidity();
       return;
     }
 
     if (file && file.size > MAX_SIZE) {
-      alert("L'image ne doit pas dépasser 4 Mo.");
+      showFormError("L'image ne doit pas dépasser 4 Mo.");
       imageInput.value = "";
-      checkFormValidity();
       return;
     }
 
     if (file && file.size <= MAX_SIZE) {
+      clearFormError();
+
       const reader = new FileReader();
 
       reader.onload = (e) => {
